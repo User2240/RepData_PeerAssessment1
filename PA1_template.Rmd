@@ -6,20 +6,95 @@ output:
 ---
 
 
-## Loading and preprocessing the data
+### Loading and Preprocessing the Data
 
 
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
+```{r echo=TRUE}
+activitydata <- read.csv("activity.csv")
+colnames(activitydata) <- c("steps","date","interval")
+subset_activitydata <- activitydata[which(activitydata$steps != "NA"), names(activitydata) %in%
+                                            c("steps","date","interval")]
+head(subset_activitydata)
+```
 
 
+### What is mean total number of steps taken per day?
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r echo=TRUE}
+library(ggplot2)
+steps_by_day <- aggregate(subset_activitydata$steps, by=subset_activitydata["date"], FUN=sum)
+head(steps_by_day)
+ggplot(steps_by_day, aes(x=x)) + geom_histogram()
+mean(steps_by_day$x)
+median(steps_by_day$x)
+```
+
+### What is the average daily activity pattern?
+```{r echo=TRUE}
+library(ggplot2)
+average_steps_per_interval <- aggregate(subset_activitydata$steps, by=subset_activitydata["interval"], FUN=mean)
+head(average_steps_per_interval)
+ggplot(average_steps_per_interval,
+              aes(x = interval, y = x)) + geom_line()
+average_steps_per_interval[which.max(average_steps_per_interval$x),]
+```
+
+### Rows with NA
+```{r echo=TRUE}
+count_all_rows <- nrow(activitydata)
+count_filled_rows <- nrow(subset_activitydata)
+return(count_all_rows-count_filled_rows)
+```
+
+### Fill NAs with Average Value for Interval
+```{r echo=TRUE}
+merge1 <- merge(activitydata, average_steps_per_interval, by="interval")
+for (i in 1:nrow(merge1)){
+        if (is.na(merge1[i,2])){ 
+                merge1[i,2] <- merge1[i,4]
+        }
+        else {
+                merge1[i,2] <- merge1[i,2]
+                }
+}
+head(merge1)
+steps_by_day_2 <- aggregate(merge1$steps, by=merge1["date"], FUN=sum)
+head(steps_by_day_2)
+ggplot(steps_by_day_2, aes(x=x)) + geom_histogram()
+mean(steps_by_day_2$x)
+median(steps_by_day_2$x)
+```
+
+### Are there differences in activity patterns between weekdays and weekends?
+```{r echo=TRUE}
+for (i in 1:nrow(merge1)){
+        merge1[i,5] <- weekdays(as.Date(merge1[i,3]), abbreviate = FALSE)}
+steps_by_day_3 <- aggregate(merge1$steps, by=merge1["V5"], FUN=mean)
+head(steps_by_day_3)
+merge2 <- merge(merge1, steps_by_day_3, by="V5")
+head(merge2)
+subset_merge2_weekend <- merge2[which((merge2$V5 == "Saturday") | (merge2$V5 == "Sunday")), names(merge2) %in%
+                                            c("V5","interval","steps","date","x.x","x.y")]
+head(subset_merge2_weekend)
+subset_merge2_weekday <- merge2[which((merge2$V5 != "Saturday") | (merge2$V5 != "Sunday")), names(merge2) %in%
+                                            c("V5","interval","steps","date","x.x","x.y")]
+head(subset_merge2_weekday)
+
+steps_by_interval <- aggregate(subset_merge2_weekend$steps, by=subset_merge2_weekend["interval"], FUN=mean)
+colnames(steps_by_interval) <- c("interval","steps")
+
+steps_by_interval2 <- aggregate(subset_merge2_weekday$steps, by=subset_merge2_weekday["interval"], FUN=mean)
+colnames(steps_by_interval2) <- c("interval","steps")
+
+plot1 <- ggplot(steps_by_interval,
+              aes(x = interval, y = steps)) + geom_line() + ggtitle("Weekend")
+
+plot2 <- ggplot(steps_by_interval2,
+              aes(x = interval, y = steps)) + geom_line() + ggtitle("Weekday")
+
+library(gtable)
+plot1 <- ggplotGrob(plot1)
+plot2 <- ggplotGrob(plot2)
+g <- rbind(plot1, plot2, size = "first")
+grid::grid.draw(g)
+```
