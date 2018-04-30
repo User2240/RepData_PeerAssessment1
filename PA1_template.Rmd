@@ -5,8 +5,7 @@
 +  html_document:
 +    keep_md: true
 +---
-Reproducible Research - Course Project 1
-========================================
+
 
 ### Loading and Preprocessing the Data
 
