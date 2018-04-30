@@ -1,10 +1,5 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
-
+Reproducible Research - Course Project 1
+========================================
 
 ### Loading and Preprocessing the Data
 
@@ -39,6 +34,7 @@ ggplot(average_steps_per_interval,
 average_steps_per_interval[which.max(average_steps_per_interval$x),]
 ```
 
+### Inputing Missing Values
 ### Rows with NA
 ```{r echo=TRUE}
 count_all_rows <- nrow(activitydata)
@@ -64,21 +60,19 @@ ggplot(steps_by_day_2, aes(x=x)) + geom_histogram()
 mean(steps_by_day_2$x)
 median(steps_by_day_2$x)
 ```
+##### Yes, the values differ from the estimates from the first part of the assignment. The impact is that now the median number of steps and mean number of steps are the same.
 
 ### Are there differences in activity patterns between weekdays and weekends?
 ```{r echo=TRUE}
 for (i in 1:nrow(merge1)){
         merge1[i,5] <- weekdays(as.Date(merge1[i,3]), abbreviate = FALSE)}
 steps_by_day_3 <- aggregate(merge1$steps, by=merge1["V5"], FUN=mean)
-head(steps_by_day_3)
+print(steps_by_day_3)
 merge2 <- merge(merge1, steps_by_day_3, by="V5")
-head(merge2)
 subset_merge2_weekend <- merge2[which((merge2$V5 == "Saturday") | (merge2$V5 == "Sunday")), names(merge2) %in%
                                             c("V5","interval","steps","date","x.x","x.y")]
-head(subset_merge2_weekend)
 subset_merge2_weekday <- merge2[which((merge2$V5 != "Saturday") | (merge2$V5 != "Sunday")), names(merge2) %in%
                                             c("V5","interval","steps","date","x.x","x.y")]
-head(subset_merge2_weekday)
 
 steps_by_interval <- aggregate(subset_merge2_weekend$steps, by=subset_merge2_weekend["interval"], FUN=mean)
 colnames(steps_by_interval) <- c("interval","steps")
